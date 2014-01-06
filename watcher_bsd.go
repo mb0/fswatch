@@ -11,13 +11,12 @@ package fswatch
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"syscall"
 )
 
 const (
-	modifyFlags = syscall.NOTE_WRITE | syscall.NOTE_EXTEND
+	modifyFlags = syscall.NOTE_WRITE | syscall.NOTE_EXTEND | syscall.NOTE_ATTRIB
 	deleteFlags = syscall.NOTE_DELETE | syscall.NOTE_RENAME | syscall.NOTE_REVOKE
 	allFlags    = modifyFlags | deleteFlags
 )
@@ -226,7 +225,9 @@ func (w *watcher) handle(mask uint32, nfo *info) {
 			}
 			return
 		}
-		fi.update(nfi)
-		w.context.Handle(Modify, fi)
+		if fi.changed(nfi) {
+			fi.update(nfi)
+			w.context.Handle(Modify, fi)
+		}
 	}
 }
