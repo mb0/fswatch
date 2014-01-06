@@ -24,6 +24,6 @@ func TestLinks(t *testing.T) {
 		t.Fatal("failed to create symlink", err)
 	}
 	time.Sleep(time.Millisecond)
-	env.expect = []record{{Create, link}}
+	env.expect = []record{{Create, link, false}}
 	env.check()
 }

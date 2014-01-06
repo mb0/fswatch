@@ -18,7 +18,7 @@ import (
 const (
 	createFlags = syscall.IN_CREATE | syscall.IN_MOVED_TO
 	modifyFlags = syscall.IN_CLOSE_WRITE | syscall.IN_ATTRIB
-	deleteFlags = syscall.IN_MOVED_FROM | syscall.IN_DELETE | syscall.IN_DELETE_SELF | syscall.IN_MOVE_SELF
+	deleteFlags = syscall.IN_MOVED_FROM | syscall.IN_DELETE | syscall.IN_DELETE_SELF
 	allFlags    = createFlags | modifyFlags | deleteFlags ^ syscall.IN_DELETE_SELF | syscall.IN_EXCL_UNLINK
 )
 

@@ -19,7 +19,8 @@ var waitfor = 15 * time.Millisecond
 // record represents an event received by a `fswatch.Handler`.
 type record struct {
 	Event
-	path string
+	path     string
+	optional bool
 }
 
 func (r record) String() string {
@@ -69,7 +70,7 @@ func (t *testenv) handle(e Event, i FileInfo) {
 	t.Log("record", e, i.Path())
 	t.Lock()
 	defer t.Unlock()
-	t.events = append(t.events, record{e, i.Path()})
+	t.events = append(t.events, record{e, i.Path(), false})
 }
 
 func (t *testenv) error(err error) {
@@ -111,14 +112,14 @@ func (t *testenv) writeClose(f *os.File, err error) {
 func (t *testenv) createWriteClose(paths ...string) string {
 	path := filepath.Join(paths...)
 	t.writeClose(os.Create(path))
-	t.expect = append(t.expect, record{Create, path})
+	t.expect = append(t.expect, record{Create, path, false}, record{Modify, path, true})
 	return path
 }
 
 func (t *testenv) openWriteClose(paths ...string) string {
 	path := filepath.Join(paths...)
 	t.writeClose(os.Create(path))
-	t.expect = append(t.expect, record{Modify, path})
+	t.expect = append(t.expect, record{Modify, path, true})
 	return path
 }
 
@@ -128,7 +129,7 @@ func (t *testenv) mkdir(paths ...string) string {
 	if err != nil {
 		t.Fatal("failed to mkdir.", err)
 	}
-	t.expect = append(t.expect, record{Create, path})
+	t.expect = append(t.expect, record{Create, path, false})
 	return path
 }
 
@@ -137,7 +138,7 @@ func (t *testenv) remove(path string) {
 	if err != nil {
 		t.Fatal("failed to remove.", err)
 	}
-	t.expect = append(t.expect, record{Delete, path})
+	t.expect = append(t.expect, record{Delete, path, false})
 }
 
 func (t *testenv) load(path string, recursive bool) {
@@ -162,23 +163,25 @@ func (t *testenv) check() {
 			t.Error(err)
 		}
 	}
-	events := t.events
-	if len(t.events) > len(t.expect) {
-		events = t.events[:len(t.expect)]
-	}
-	for i, record := range events {
-		if e := t.expect[i]; record != e {
-			t.Errorf("expected %s got %s", e, record)
+	opt := 0
+	for i, e := range t.expect {
+		if i-opt >= len(t.events) {
+			t.Errorf("expected %s got nothing", e)
+			continue
 		}
+		record := t.events[i-opt]
+		if record.Event == e.Event && record.path == e.path {
+			continue
+		}
+		if e.optional {
+			opt++
+			continue
+		}
+		t.Errorf("expected %s got %s", e, record)
 	}
 	if len(t.events) > len(t.expect) {
 		for _, record := range t.events[len(t.expect):] {
 			t.Errorf("unexpected %s", record)
-		}
-	}
-	if len(t.events) < len(t.expect) {
-		for _, record := range t.expect[len(t.events):] {
-			t.Errorf("expected %s got nothing", record)
 		}
 	}
 }

@@ -6,6 +6,8 @@ package fswatch
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -37,6 +39,42 @@ func TestWatch(t *testing.T) {
 	env.watcher.close()
 	time.Sleep(waitfor)
 	// check results
+	env.check()
+}
+
+func TestRename(t *testing.T) {
+	// setup test environment
+	env := newtestenv(t)
+	defer env.close()
+	// create
+	dir := env.mkdir(env.root, "foo")
+	file := env.createWriteClose(dir, "file")
+	time.Sleep(waitfor)
+	// rename
+	newdir := filepath.Join(env.root, "bar")
+	err := os.Rename(dir, newdir)
+	if err != nil {
+		t.Fatal("failed to rename.", err)
+	}
+	if runtime.GOOS == "linux" || runtime.GOOS == "windows" {
+		env.expect = append(env.expect,
+			record{Delete, dir, false},
+			record{Delete, file, false},
+			record{Create, newdir, false},
+			record{Create, filepath.Join(newdir, "file"), false},
+		)
+	} else {
+		env.expect = append(env.expect,
+			record{Create, newdir, false},
+			record{Create, filepath.Join(newdir, "file"), false},
+			record{Delete, dir, false},
+			record{Delete, file, false},
+		)
+	}
+	time.Sleep(waitfor)
+	// close and check results
+	env.watcher.close()
+	time.Sleep(waitfor)
 	env.check()
 }
 
