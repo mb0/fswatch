@@ -147,7 +147,7 @@ func (w *watcher) close() error {
 	if w.fd == -1 {
 		return ErrClosed
 	}
-	if w.tree.length == 0 {
+	if w.tree.root == nil {
 		fd, err := syscall.InotifyAddWatch(w.fd, "/", syscall.IN_DELETE_SELF)
 		if fd == -1 {
 			return os.NewSyscallError("InotifyAddWatch", err)

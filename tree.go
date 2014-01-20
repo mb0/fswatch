@@ -11,7 +11,6 @@ import "os"
 // 	github.com/mb0/critbit
 type tree struct {
 	root   *ref
-	length int
 }
 
 // ref holds either a info or node pointer
@@ -76,7 +75,6 @@ func (t *tree) insert(info *info) *info {
 	// test for empty tree
 	if t.root == nil {
 		t.root = &ref{info: info}
-		t.length++
 		return nil
 	}
 	// walk for best member
@@ -129,7 +127,6 @@ ByteFound:
 	}
 	nn.child[ndir] = *wp
 	wp.node = nn
-	t.length++
 	return nil
 }
 
@@ -156,7 +153,6 @@ func (t *tree) deleteAll(root string, f func(*info)) {
 		return
 	}
 	// delete from tree
-	t.length--
 	if wp == nil {
 		t.root = nil
 	} else {
@@ -205,7 +201,6 @@ func (t *tree) deliter(p ref, f func(*info)) {
 		t.deliter(p.node.child[1], f)
 	} else {
 		f(p.info)
-		t.length--
 	}
 }
 
@@ -262,30 +257,28 @@ func walkiter(p ref, f func(FileInfo) error, skips []string) error {
 		}
 		return nil
 	}
-Skips:
 	// skip this info if it is prefixed or itself is a skip path
+	path := p.info.path
+Skips:
 	for _, s := range skips {
-		if len(s) > len(p.info.path) {
+		if len(s) > len(path) {
 			continue
 		}
 		// compare starting with the end
 		for i := len(s) - 1; i >= 0; i-- {
-			if s[i] != p.info.path[i] {
+			if s[i] != path[i] {
 				continue Skips
 			}
 		}
 		return nil
 	}
 	if p.info.Ignored() {
-		return skip(p.info.path + string(os.PathSeparator))
+		return nil
 	}
 	err := f(p.info)
-	if err == SkipDir {
-		if !p.info.IsDir() {
-			return nil
-		}
+	if err == SkipDir && p.info.IsDir() {
 		// if we skip this dir we need to know the path later
-		return skip(p.info.path + string(os.PathSeparator))
+		return skip(path + string(os.PathSeparator))
 	}
 	return err
 }

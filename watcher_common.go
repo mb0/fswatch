@@ -120,7 +120,10 @@ func (w *watcher) loadImpl(root string, flags uint, event Event, rootflags, othe
 		}
 		if ignore {
 			f.flags |= ignored
-			return SkipDir
+			if fi.IsDir() {
+				return SkipDir
+			}
+			return nil
 		}
 		if watchFilter(f) {
 			err = w.add(f, otherflags)

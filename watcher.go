@@ -54,7 +54,7 @@ func (w Watcher) Get(path string) FileInfo {
 	w.mutex.RLock()
 	fi := w.tree.get(path)
 	w.mutex.RUnlock()
-	if fi.Ignored() {
+	if fi == nil || fi.Ignored() {
 		return nil
 	}
 	return fi
