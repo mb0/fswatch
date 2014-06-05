@@ -182,6 +182,7 @@ func (w *watcher) run(fd int) {
 			if err != nil {
 				w.context.Error(err)
 			}
+			return
 		} else if n < syscall.SizeofInotifyEvent {
 			if err != nil {
 				w.context.Error(os.NewSyscallError("Read", err))
@@ -207,8 +208,8 @@ func (w *watcher) run(fd int) {
 				var name string
 				if raw.Len > 0 {
 					start := &buf[offset+syscall.SizeofInotifyEvent]
-					bytes := (*[syscall.PathMax]byte)(unsafe.Pointer(start))
-					name = strings.TrimRight(string(bytes[0:raw.Len]), "\000")
+					bytes := *(*[syscall.PathMax]byte)(unsafe.Pointer(start))
+					name = strings.TrimRight(string(bytes[:raw.Len]), "\000")
 				}
 				w.handle(raw.Mask, info, name)
 			}
@@ -256,9 +257,7 @@ func (w *watcher) handle(mask uint32, nfo *info, name string) {
 			}
 			return
 		}
-		if fi.changed(nfi) {
-			fi.update(nfi)
-			w.context.Handle(Modify, fi)
-		}
+		fi.update(nfi)
+		w.context.Handle(Modify, fi)
 	}
 }

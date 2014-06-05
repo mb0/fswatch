@@ -225,9 +225,7 @@ func (w *watcher) handle(mask uint32, nfo *info) {
 			}
 			return
 		}
-		if fi.changed(nfi) {
-			fi.update(nfi)
-			w.context.Handle(Modify, fi)
-		}
+		fi.update(nfi)
+		w.context.Handle(Modify, fi)
 	}
 }

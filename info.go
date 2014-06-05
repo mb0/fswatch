@@ -85,9 +85,3 @@ func (i *info) update(fi os.FileInfo) {
 	i.modt = fi.ModTime()
 	i.size = fi.Size()
 }
-
-func (i *info) changed(fi os.FileInfo) bool {
-	i.mutex.Lock()
-	defer i.mutex.Unlock()
-	return i.mode != fi.Mode() || i.modt != fi.ModTime() || i.size != fi.Size()
-}

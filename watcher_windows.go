@@ -384,9 +384,7 @@ func (w *watcher) handle(action uint32, nfo *info, name string) {
 			}
 			return
 		}
-		if fi.changed(nfi) {
-			fi.update(nfi)
-			w.context.Handle(Modify, fi)
-		}
+		fi.update(nfi)
+		w.context.Handle(Modify, fi)
 	}
 }
