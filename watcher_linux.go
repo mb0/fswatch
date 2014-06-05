@@ -247,7 +247,9 @@ func (w *watcher) handle(mask uint32, nfo *info, name string) {
 	if fi == nil {
 		err := w.loadImpl(path, nfo.flags&recurse, Create, allFlags, allFlags)
 		if err != nil && err != SkipDir {
-			w.context.Error(err)
+			if !os.IsNotExist(err) {
+				w.context.Error(err)
+			}
 		}
 	} else {
 		nfi, err := os.Lstat(path)
